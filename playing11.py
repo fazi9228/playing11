@@ -7,11 +7,7 @@ from datetime import date
 conn = sqlite3.connect("playing11.db", check_same_thread=False)
 c = conn.cursor()
 
-# Connect to SQLite database
-conn = sqlite3.connect("playing11.db", check_same_thread=False)
-c = conn.cursor()
-
-# ✅ Ensure tables exist before anything else
+# Ensure tables exist
 c.execute("""
 CREATE TABLE IF NOT EXISTS availability (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,17 +29,15 @@ CREATE TABLE IF NOT EXISTS expenses (
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 """)
-
 conn.commit()
-
 
 # Page config
 st.set_page_config(page_title="Weekend Cricket Squad", layout="centered")
 st.title("🏏 Playing 11 – Weekend Cricket App")
 
-# Tabs
-menu = ["Submit Availability", "Match Roster", "Split Expenses"]
-choice = st.sidebar.selectbox("Menu", menu)
+# Tabs as main page menu (not sidebar)
+menu = ["Submit Availability", "Match Roster", "Split Expenses", "Delete Entries"]
+choice = st.radio("Choose an option:", menu, horizontal=True)
 
 # Create availability form
 if choice == "Submit Availability":
@@ -96,3 +90,33 @@ elif choice == "Split Expenses":
             st.write("Players:", ", ".join(players))
     else:
         st.info("No confirmed players for this match date.")
+
+# Delete entries
+elif choice == "Delete Entries":
+    st.subheader("🗑️ Delete Records")
+
+    delete_type = st.radio("What would you like to delete?", ["Availability", "Expenses"])
+
+    match_date = st.date_input("Select Match Date")
+    if delete_type == "Availability":
+        c.execute("SELECT id, player_name, status FROM availability WHERE match_date = ?", (match_date.isoformat(),))
+        records = c.fetchall()
+        for record_id, name, status in records:
+            if st.button(f"❌ Delete {name} ({status})", key=f"del_avail_{record_id}"):
+                c.execute("DELETE FROM availability WHERE id = ?", (record_id,))
+                conn.commit()
+                st.success(f"Deleted: {name}")
+                st.experimental_rerun()
+    else:
+        c.execute("SELECT id, total_amount, paid_by FROM expenses WHERE match_date = ?", (match_date.isoformat(),))
+        expenses = c.fetchall()
+        for record_id, amount, payer in expenses:
+            if st.button(f"❌ Delete Expense: RM{amount} by {payer}", key=f"del_exp_{record_id}"):
+                c.execute("DELETE FROM expenses WHERE id = ?", (record_id,))
+                conn.commit()
+                st.success(f"Deleted expense by {payer}")
+                st.experimental_rerun()
+
+# Funny quote at the end
+st.markdown("---")
+st.caption("Legends show up. Rest post stories.")
