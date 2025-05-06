@@ -63,8 +63,29 @@ elif choice == "Match Roster":
     c.execute("SELECT player_name, status FROM availability WHERE match_date=?", (match_date.isoformat(),))
     rows = c.fetchall()
     if rows:
+        available = []
+        maybe = []
+        not_available = []
+        
         for player, status in rows:
-            st.write(f"- {player}: **{status}**")
+            if status == "Available":
+                available.append(player)
+            elif status == "Maybe":
+                maybe.append(player)
+            else:
+                not_available.append(player)
+        
+        st.write("### Available Players:")
+        for player in available:
+            st.write(f"- {player}")
+            
+        st.write("### Maybe:")
+        for player in maybe:
+            st.write(f"- {player}")
+            
+        st.write("### Not Available:")
+        for player in not_available:
+            st.write(f"- {player}")
     else:
         st.info("No entries for this date yet.")
 
@@ -97,6 +118,16 @@ elif choice == "Split Expenses":
             st.info("Please select at least one player to split the cost with.")
     else:
         st.info("No confirmed players for this match date.")
+        
+    # Show expenses for this date
+    st.subheader("Existing Expenses")
+    c.execute("SELECT paid_by, total_amount, amount_per_player FROM expenses WHERE match_date=?", (match_date.isoformat(),))
+    expense_rows = c.fetchall()
+    if expense_rows:
+        for paid_by, total, per_player in expense_rows:
+            st.write(f"- {paid_by} paid RM {total} (RM {per_player} per player)")
+    else:
+        st.info("No expenses recorded for this date.")
 
 elif choice == "Delete Entries":
     st.subheader("🗑️ Delete Records")
@@ -121,7 +152,7 @@ elif choice == "Delete Entries":
                 c.execute("DELETE FROM expenses WHERE id = ?", (record_id,))
                 conn.commit()
                 st.success(f"Deleted expense by {payer}")
-                st.experimental_rerun()
+                st.rerun()
 
 # Funny quote at the end
 st.markdown("---")
