@@ -73,25 +73,31 @@ elif choice == "Split Expenses":
     st.subheader("Post-Match Expense Split")
     match_date = st.date_input("Match Date")
     total_amount = st.number_input("Total Expense (e.g. booking fee)", min_value=0.0)
-    paid_by = st.text_input("Paid By")
 
-    # Get attendees for split
+    # Get available players for dropdown
     c.execute("SELECT player_name FROM availability WHERE match_date=? AND status='Available'", (match_date.isoformat(),))
     players = [row[0] for row in c.fetchall()]
+
     if players:
-        amount_per_player = round(total_amount / len(players), 2)
-        if st.button("Save Expense"):
-            c.execute("""
-                INSERT INTO expenses (match_date, total_amount, paid_by, amount_per_player, settled_by)
-                VALUES (?, ?, ?, ?, ?)
-            """, (match_date.isoformat(), total_amount, paid_by.strip(), amount_per_player, ",".join(players)))
-            conn.commit()
-            st.success(f"Expense saved. Each player owes: RM {amount_per_player}")
-            st.write("Players:", ", ".join(players))
+        selected_players = st.multiselect("Select Players to Split Expense With", players, default=players)
+        paid_by = st.selectbox("Paid By", players)
+
+        if selected_players:
+            amount_per_player = round(total_amount / len(selected_players), 2)
+            st.write(f"Each player owes: RM {amount_per_player}")
+
+            if st.button("Save Expense"):
+                c.execute("""
+                    INSERT INTO expenses (match_date, total_amount, paid_by, amount_per_player, settled_by)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (match_date.isoformat(), total_amount, paid_by.strip(), amount_per_player, ",".join(selected_players)))
+                conn.commit()
+                st.success("Expense saved successfully!")
+        else:
+            st.info("Please select at least one player to split the cost with.")
     else:
         st.info("No confirmed players for this match date.")
 
-# Delete entries
 elif choice == "Delete Entries":
     st.subheader("🗑️ Delete Records")
 
