@@ -16,4 +16,39 @@ Track player availability, view match rosters, and split post-match expenses eas
 ---
 
 ## 📦 Project Structure
+playing11/
+├── app.py # Streamlit app
+├── playing11.db # SQLite database (auto-created on first run)
+├── requirements.txt # Python dependencies
+└── README.md # Project documentation
+
+yaml
+Copy
+Edit
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/playing11-app.git
+cd playing11-app
+2. Create a virtual environment (optional but recommended)
+bash
+Copy
+Edit
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+3. Install dependencies
+bash
+Copy
+Edit
+pip install -r requirements.txt
+4. Run the app locally
+bash
+Copy
+Edit
+streamlit run app.py
 
